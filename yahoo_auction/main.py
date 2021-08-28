@@ -74,22 +74,16 @@ class YahooAuction():
         try:
             soup = BeautifulSoup(page.text, "html.parser")
             exhibits = soup.find_all('td', class_='decTd06')
-            bid_dates = soup.find_all('td', class_='decTd05')
 
             if len(exhibits)==0:
                 return []
-            
-            targets = []
 
-            for i,v in zip(exhibits, bid_dates):
-                link = i.a['href']
-                title = i.a.text.replace('初回入札:', '')
-                fbid_date = datetime.strptime(v.text.replace(' ', ''), '%Y年%m月%d日%H時%M分')
+            targets = []
+            for i in exhibits:
                 targets.append(
                     {
-                        'link':link,
-                        'title':title,
-                        'fbid_date':fbid_date
+                        'link':i.a['href'],
+                        'title':i.a.text
                     }
                 )
 
@@ -103,7 +97,7 @@ class YahooAuction():
     def report_fbid_to_slack(self, targets, session):
         try:
             for i in targets:
-                res = self.send_slack_message(FBID_WEBHOOK_URL, "商品名：{0}\nリンク：{1}".format(i['title'], i['link'].replace('?notice=fbid', '')))
+                res = self.send_slack_message(FBID_WEBHOOK_URL, "商品名：{0}\nリンク：{1}".format(i['title'].replace('初回入札:', ''), i['link'].replace('?notice=fbid', '')))
                 if res.status_code==200:
                     session.get(i['link'])
         except:
